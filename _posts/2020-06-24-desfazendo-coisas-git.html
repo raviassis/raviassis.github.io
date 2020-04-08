@@ -1,0 +1,153 @@
+---
+layout: post
+title:  Desfazendo "coisas" no Git
+date:   2020-06-26 12:00:00
+---
+
+<p>
+    Ao trabalhar com o git, em alguns momentos, é possível que haja a necessidade de desfazer algo.
+    Vou apresentar aqui algumas ferramentas do git para desfazer operações.
+</p>
+
+<p>
+    <strong>Dica:</strong> Seja cuidadoso. Comandos de desfazer do git são capazes de provocar perda de trabalho caso seja cometido algum 
+    engano.
+</p>
+
+<h2>O que é Git?</h2>
+<p>
+    Basicamente, o git é um sistema de controle de versão distribuído, utilizado geralmente no desenvolvimento de software.
+    Ele é uma ferramenta que registra o histórico de edições de qualquer tipo de arquivo.
+</p>
+<h2>Ferramentas para desfazer no git</h2>
+<h3>Commit --amend</h3>
+<p>
+    Esse comando irá pegar a área 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        stage
+    </a> e usá-la para realizar um commit. Caso não haja nenhuma modificação desde o commit 
+    anterior, a imagem do commit será a mesma e será possível alterar a mensagem do commit anterior.
+</p>
+<pre>
+$ git commit -m 'fiz coisas'
+$ git commit --amend -m 'Implementação verificação de idade na tela de cadastro'
+</pre>
+<p>
+    Também podemos adicionar arquivos que esquecemos de adicionar em um commit anterior.
+</p>
+<pre>
+$ git commit -m 'Implementado funcionalidade x'
+$ git add arquivoImportanteQueFicouFaltando.js
+$ git commit --amend    
+</pre>
+<p>
+    Com o commit --amend, o segundo commit substitui o resultante do primeiro.
+</p>
+<h3>Checkout -- file</h3>
+<p>
+    O comando git checkout, além de ser usado para navegar entre branchs e commits, pode ser utilizado para descartar 
+    mudanças realizadas em um arquivo específico. Supomos que fizemos uma alteração no arquivo README.md, porém queremos 
+    descartar nossas alteração. Utilizando o git checkout, podemos descartar nossas modificações e recuperar o arquivo 
+    para seu estado no commit anterior.
+</p>
+<pre>
+$ echo 'texto' > README.md
+$ git add README.md
+$ git commit -m 'Add README.md'
+$ echo 'texto errado' > README.md
+$ git checkout -- README.md
+</pre>
+<h3>Reset</h3>
+<p>
+    O git reset é um comando extremamente poderoso, e que deve ser usado com cautela. Podemos ter perda de código caso 
+    este comando seja usado de forma imprudente. Para entender melhor como o reset trabalha, é necessário entender como 
+    funciona o 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank"> 
+        gerenciamento de estados do git
+    </a>. 
+</p>
+<p>
+    Basicamente, o comando reset move o HEAD e o indicador de referência da branch para o commit anterior, ou commit informado.
+</p>
+<p>
+    Ex.: Commit anterior
+</p>
+<pre>
+$ git reset
+</pre>
+<p>
+    Ex.: Commit expecífico.
+</p>
+<pre>
+$ git reset 42e2e5a
+</pre>
+<p>
+    Existem três opções ao fazer o reset: --soft, --mixed e --hard
+</p>
+<h4>--soft</h4>
+<p>
+    Opção mais segura entre as três, o reset --soft irá mover o HEAD e o indicador de referência sem alterar a área 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        stage
+    </a> e o 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        diretório de trabalho
+    </a>. Isso significa que as alterações realizadas ainda poderam ser 
+    recuperadas.
+</p>
+<pre>
+$ git reset --soft
+</pre>
+<h4>--mixed</h4>
+<p>
+    Opção padrão do comando reset, move o HEAD e o indicador de referência alterando a área de 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        stage
+    </a>, mas ainda sem alterar o 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        diretório de trabalho
+    </a>. As alterações ainda podem ser recuperadas.
+</p>
+<pre>
+$ git reset
+</pre>
+<p>
+    ou
+</p>
+<pre>
+$ git reset --mixed
+</pre>
+<h4>--hard</h4>
+<p>
+    A opção mais perigosa do git reset. Com essa opção, o reset irá mover o HEAD e o indicador de referência, redefinindo 
+    as áreas de 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        stage
+    </a> e o 
+    <a href="https://medium.com/@devmasterteam/git-ebook-8808f7301054" target="_blank">
+        diretório de trabalho
+    </a>. Dessa forma, todas as alterações realizadas são perdidas.
+</p>
+<pre>
+$ git reset --hard
+</pre>
+<h3>Revert</h3>
+<p>
+    O git revert é um dos comandos mais indicados quando se precisa desfazer um commit. Diferente do git reset, o revert 
+    não modifica o histórico de commits do repositório. Seu funcionamento consiste basicamente em criar um commit que 
+    desfaça as alterações que foram adicionadas por outro commit. Dessa forma, podemos visualizar exatamente o que está 
+    sendo revertido.
+</p>
+<pre>
+$ touch file1.txt
+$ git add *
+$ git commit -m "first commit"
+$ touch file2.txt
+$ git add *
+$ git commit -m "second commit"
+$ git revert HEAD
+</pre>
+<p>
+    O segundo commit será revertido e o arquivo file2.txt será deletado. Ao verificar os logs, poderemos ver que o revert
+    está presente no histórico de commit e poderemos recuperar os registros se necessário.
+</p>
