@@ -21,12 +21,14 @@
         margin-bottom: 15px;
         height: 40%;
     }
+    .header-content .page-title {
+        font-size: 3rem;
+    }
 }
 @media only screen and (max-width: 900px) {
     .header {
         box-sizing: border-box;
         min-height: 240px;
-        padding: 15% 0;
     }
 }
 .header {
@@ -52,6 +54,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 70%;
 }
 .page-title {
     margin: 10px 0 10px 0;
