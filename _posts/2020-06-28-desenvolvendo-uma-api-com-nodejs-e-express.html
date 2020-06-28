@@ -1,0 +1,236 @@
+---
+layout: post
+title:  Desenvolvendo uma API com NodeJs e Express
+date:   2020-07-03 12:00:00
+---
+<p>
+    Olá pessoal. Hoje veremos como pode ser simples e fácil desenvolver uma API Rest utilizando de NodeJs e o framework 
+    Express.
+</p>
+
+<p>
+    Antes de começar, vamos dar uma explicação rápida o que é cada um e como instalá-los.
+</p>
+
+<h2>O que é NodeJs?</h2>
+<p>
+    <a href="https://nodejs.org/pt-br/" target="_blank">NodeJs</a> é um ambiente de execução para JavaScript desenvolvido
+    com a engine V8 do Chrome. Ele foi projetado para o desenvolvimento de aplicações escaláveis em rede.
+</p>
+
+<h3>Instalação NodeJs</h3>
+<h4>Windows</h4>
+<p>
+    Acesse este <a href="https://nodejs.org/pt-br/download/" target="_blank">link</a> para acessar a página de downloads do
+    NodeJs. Baixe o instalador windows de acordo com a arquitetura do seu sistema (32 ou 64 bits).
+</p>
+
+<h4>Ubuntu</h4>
+<pre>
+# Using Ubuntu
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+sudo apt-get install -y nodejs
+</pre>
+
+<h4>Outras distros Linux</h4>
+<p>
+    Neste <a href="https://nodejs.org/pt-br/download/package-manager/" target="_blank">link</a> à diversas opções de download
+    para outros sistemas. Você encontrará instaladores para diversas distros linux.
+</p>
+
+<h2>O que é Express</h2>
+<p>
+    O <a href="https://expressjs.com/pt-br/" target="_blank">Express</a> é um framework para aplicações web em node,
+    flexível e minimalista.
+</p>
+
+<h3>Instalação Express</h3>
+<p>
+    O Express é um pacote npm que instalamos como dependência nos projetos em nodejs. Vamos criar um projeto de exemplo
+    e instalá-lo como dependência.
+</p>
+<pre>
+$ mkdir example-express
+$ cd example-express
+</pre>
+<p>
+    Vamos inicializar o arquivo package.json em nosso projeto. Ele é o arquivo que armazena todas as dependências que um
+    pacote em node precisa. Saiba mais sobre package.json
+    <a href="https://docs.npmjs.com/files/package.json" target="_blank">aqui</a>.
+</p>
+<pre>
+$ npm init
+</pre>
+<p>
+    Será solicitado algumas informações como package name, version, description, etc. Vamos apenas confirmar as opções
+    padrão pressionando enter para cada solicitação.
+</p>
+<p>
+    Agora vamos instalar o Express.
+</p>
+<pre>
+$ npm install express
+</pre>
+
+<h4>Hello World Express</h4>
+<p>
+    Instalado o express no projeto, crie um arquivo index.js com o código abaixo.
+</p>
+<pre>
+var express = require('express');
+var app = express();
+
+app.get('/', function (req, res) {
+    res.send('Hello World!');
+});
+
+app.listen(3000, function () {
+    console.log('Example app listening on port 3000!');
+});
+</pre>
+<p>
+    O código acima inicia um servidor escutando a porta 3000. Ele irá retornar um ‘Hello World!’ para todas as 
+    requisições na rota ‘/’.
+</p>
+<p>
+    Execute o código acima.
+</p>
+<pre>
+$ node index.js
+</pre>
+<p>
+    Acesse http://localhost:3000/ e verá a resposta do servidor express.
+</p>
+
+<h2>Mãos à obra.</h2>
+<p>
+    Para agilizar o processo, vamos utilizar o 
+    <a href="https://expressjs.com/pt-br/starter/generator.html" target="_blank">Express Generator</a>. Ele irá 
+    inicializar nossa api com uma estrutura básica.
+</p>
+<pre>
+$ npm i express-generator -g
+$ express --no-view node-express-api
+</pre>
+<p>
+    Acesse o diretório do projeto e instale as dependências.
+</p>
+<pre>
+$ cd node-express-api
+$ npm install
+</pre>
+<p>
+    Vamos executar a aplicação e ver se está tudo funcionando.
+</p>
+<pre>
+    $ npm start
+</pre>
+<p>
+    Acesse http://localhost:3000/. Veremos a página abaixo.
+    <img src="/assets/images/posts/2020-06-28-desenvolvendo-uma-api-com-nodejs-e-express/img01.png" alt="Página inicial Express">
+</p>
+<p>
+    Tudo certo. Agora vamos incluir uma rota na nossa api. Nossa rota será /games do tipo GET. A url completa será
+    http://localhost:3000/games.
+</p>
+<p>
+    Primeiro criaremos um arquivo Mock com os dados que iremos retornar na nossa api. Criem o arquivo data/gamesMock.json
+    com os dados abaixo.
+</p>
+<pre>
+[
+   {
+       "id": 1,
+       "name": "The last of us 2",
+       "price": 58.73
+   },
+   {
+       "id": 2,
+       "name": "Mortal Kombat 11",
+       "price": 63.99
+   },
+   {
+       "id": 3,
+       "name": "Monster Hunter",
+       "price": 46.19
+   },
+   {
+       "id": 4,
+       "name": "Cyberpunk 2077",
+       "price": 199.90
+   },
+   {
+       "id": 5,
+       "name": "Dead by Daylight",
+       "price": 14.79
+   }
+]
+</pre>
+<p>
+    Agora vamos criar nosso controlador para games em controllers/gameController.js
+</p>
+<pre>
+const gamesMock = require('../data/gamesMock.json');
+module.exports = {
+   getAll: (req, res) => {
+       res.status(200).json(gamesMock);
+   }
+}
+</pre>
+<p>
+    Agora precisamos configurar nossa rota. Crie o arquivo routes/games.js.
+</p>
+<pre>
+var express = require('express');
+var router = express.Router();
+const controller = require('../controllers/gameController');
+    
+/* GET games listing. */
+router.get('/', controller.getAll);
+    
+module.exports = router;    
+</pre>
+<p>
+    Modifique o arquivo app.js para incluir a rota /games.
+</p>
+<pre>
+var express = require('express');
+var path = require('path');
+var cookieParser = require('cookie-parser');
+var logger = require('morgan');
+    
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+//import route games
+var gamesRouter = require('./routes/games');
+    
+var app = express();
+    
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+    
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+//config route
+app.use('/games', gamesRouter);
+    
+module.exports = app;
+</pre>
+<p>
+    Execute novamente nossa api.
+</p>
+<pre>
+$ npm start
+</pre>
+<p>
+    Acesse http://localhost:3000/games. Nossa api irá retornar a listagem dos games em json.
+    <img src="/assets/images/posts/2020-06-28-desenvolvendo-uma-api-com-nodejs-e-express/img02.png" alt="Resposta da rota /games">
+</p>
+<p>
+    Pronto pessoal. Implementamos nossa api com nodejs e express. Aprendemos a instalar o node e o express,
+    a criar um projeto usando o express-generator, e aprendemos a criar uma nova rota em nossa api. Voltarei depois 
+    com mais artigos onde iremos evoluir essa api. Até a próxima.
+</p>

@@ -11,6 +11,7 @@ baseurl: 'https://raviassis.github.io/'
 domain_name: 'https://raviassis.github.io/'
 google_analytics: 'UA-XXXXXXXX-X'
 gems: [jekyll-paginate]
+plugins: [jekyll-paginate]
 
 # Details for the RSS feed generator
 url:            'https://raviassis.github.io/'
