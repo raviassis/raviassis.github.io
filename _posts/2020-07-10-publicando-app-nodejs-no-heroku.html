@@ -1,0 +1,133 @@
+---
+layout: post
+title:  Publicando App NodeJs no Heroku
+date:   2020-07-09 12:00:00
+---
+<p>
+    <img src="/assets/images/posts/2020-07-10-publicando-app-nodejs-no-heroku/img00.jpg" alt="Banner da publicação">
+    Olá pessoal. Hoje vou mostrar como publicar uma aplicação NodeJs no Heroku. Mas o que é cada uma dessas tecnologias?
+</p>
+
+<h2>NodeJs</h2>
+<p>
+    NodeJs é um ambiente de execução JavaScript desenvolvido com a engine V8 do Chrome.
+</p>
+<p>
+    Veja também: 
+    <a href="../../../2020/07/03/desenvolvendo-uma-api-com-nodejs-e-express.html" target="_blank">
+        Desenvolvendo uma API com NodeJs e Express
+    </a>
+</p>
+
+<h2>Heroku</h2>
+<p>
+    O Heroku é uma plataforma em nuvem como serviço (PaaS) baseada em containers. Ela permite que os desenvolvedores
+    publiquem, gerenciem, e escalem suas aplicações. Suporta oficialmente diversas linguagem de programação, como NodeJs,
+    Ruby, Java, PHP, Python, Go, Scala, além de permitir o uso de outras linguagens através de serviços de terceiros.
+</p>
+<p>
+    Para nosso exemplo de hoje, vamos precisar criar uma conta no Heroku e instalar o Heroku CLI.
+</p>
+
+<h3>Crie uma conta no Heroku</h3>
+<p>
+    Acesse o link 
+    <a href="https://signup.heroku.com/" target="_blank">https://signup.heroku.com/</a> e crie uma nova conta.
+</p>
+
+<h3>Instale o Heroku CLI</h3>
+<p>
+    Acesse o link
+    <a href="https://devcenter.heroku.com/articles/heroku-cli" target="_blank">
+        https://devcenter.heroku.com/articles/heroku-cli
+    </a> baixe e instale o Heroku CLI.
+</p>
+<p>
+    Feito os passos, vamos criar nossa aplicação node.
+</p>
+
+<h2>Criando aplicação Node</h2>
+<p>
+    Vamos utilizar o Express Generator para gerar uma aplicação node básica.
+</p>
+<pre>
+$ npm install express-generator -g
+$ express deploy-node-heroku
+$ cd deploy-node-heroku
+</pre>
+<p>
+    Instale as dependências.
+</p>
+<pre>
+$ npm install
+</pre>
+<p>
+    Teste a aplicação local.
+</p>
+<pre>
+$ npm start
+</pre>
+<p>
+    Acesse http://localhost:3000. Veremos a página abaixo.
+    <img src="/assets/images/posts/2020-07-10-publicando-app-nodejs-no-heroku/img01.png" alt="Página inicial Express">
+</p>
+<p>
+    Pronto, agora podemos publicar nossa aplicação.
+</p>
+
+<h2>Publicando no Heroku</h2>
+<p>
+    Inicialize um repositório git no diretório da aplicação e dê o primeiro commit.
+</p>
+<pre>
+$ git init
+$ git add .
+$ git commit -m “first commit”
+</pre>
+<p>
+    Faça login no Heroku utilizando o Heroku CLI.
+</p>
+<pre>
+$ heroku login
+</pre>
+<p>
+    Aparecerá a seguinte mensagem:
+</p>
+<pre>
+    heroku: Press any key to open up the browser to login or q to exit:
+</pre>
+<p>
+    Pressione qualquer tecla para continuar.
+</p>
+<p>
+    O navegador será aberto numa página de login do heroku. Faça o login e volte para o terminal.
+    <img src="/assets/images/posts/2020-07-10-publicando-app-nodejs-no-heroku/img02.png" alt="Tela de login do heroku">
+</p>
+<p>
+    Feito o login, vamos criar um app no heroku.
+</p>
+<pre>
+$ heroku create
+</pre>
+<p>
+    O comando acima irá criar um novo container de aplicação e configurar o repositório remoto.
+</p>
+<p>
+    Agora vamos publicar a aplicação.
+</p>
+<pre>
+$ git push heroku master
+</pre>
+<p>
+    Ao finalizar a publicação, execute:
+</p>
+<pre>
+$ heroku open
+</pre>
+<p>
+    O navegador será aberto na url em que nossa aplicação foi publicada.
+    <img src="/assets/images/posts/2020-07-10-publicando-app-nodejs-no-heroku/img03.png" alt="Aplicação publicada">
+</p>
+<p>
+    Pronto. Nossa aplicação está publicada e disponível na web. Espero que tenham gostado. Até a próxima.
+</p>
