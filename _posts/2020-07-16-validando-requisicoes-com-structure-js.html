@@ -1,0 +1,286 @@
+---
+layout: post
+title:  Validando requisições com Structure JS
+date:   2020-07-14 12:00:00
+---
+<p>
+    Olá pessoal. Hoje vou mostrar como validar uma requisição HTTP em uma API RESTful feita em Express usando o Structure.
+</p>
+
+<img src="/assets/images/posts/2020-07-16-validando-requisicoes-com-structure-js/img00.jpg" alt="Banner do post">
+
+<h2>O que é o Structure</h2>
+<p>
+    Segundo o próprio site <a href="https://structure.js.org/" target="_blank">structure.js.org</a>
+</p>
+<blockquote>
+    <p>
+        A simple schema/attributes library built on top of modern JavaScript.
+    </p>
+    <p>
+        structure.js.org
+    </p>
+</blockquote>
+<p>
+    O Structure é uma biblioteca JavaScript que nos permite adicionar atributos a classes baseado em um schema,
+    com validação e coerção de tipos.
+</p>
+
+<h2>Onde usar o Structure</h2>
+<p>
+    O Structure pode ser utilizado para diversos casos:
+</p>
+<ul>
+    <li>Entidades de domínio e objetos de valor</li>
+    <li>Modelos de regras de negócio</li>
+    <li>Validação e coerção de dados das requisições</li>
+    <li>Mapeamento de objetos e JSON para classes da aplicação</li>
+</ul>
+
+<h2>Como usar a validação do Structure</h2>
+<p>
+    O foco principal desse post é na utilização do Structure para validação de dados. Veremos como podemos fazer essa
+    validação.
+</p>
+<p>
+    Crie um diretório para o exemplo com um arquivo testStructure.js
+</p>
+<pre>
+$ mkdir structure-example
+$ cd structure-example
+$ touch testStructure.js
+</pre>
+<p>
+    Inicialize o gerenciamento de pacotes no diretório.
+</p>
+<pre>
+$ npm init
+</pre>
+<p>
+    Adicione o Structure como dependência do projeto
+</p>
+<pre>
+$ npm install structure
+</pre>
+<p>
+    Modifique o arquivo testStructure.js
+</p>
+<pre>
+const { attributes } = require('structure');
+
+const Game = attributes({
+    name: {
+        type: String,
+        required: true,
+    },
+    price: {
+        type: Number,
+        positive: true,
+        required: true
+    }
+})(
+    class Game {
+        formatedPrice() {
+            return '$ ' + Math.round(this.price * 100) / 100;
+        }
+    
+        toString() {
+            return `${this.name} - ${this.formatedPrice()}`;
+        }
+    }
+);
+    
+const invalidGame = new Game();
+let validate = invalidGame.validate();
+console.log(validate);
+/*
+Will be shown
+{
+    valid: false,
+    errors: [
+    { message: '"name" is required', path: ['name'] },
+    { message: '"price" is required', path: ['price'] }
+    ]
+}
+*/
+    
+const  validGame = new Game({name: 'Mortal Kombat 11', price: 24.98654125});
+validate = validGame.validate();
+console.log(validate); // { valid: true }
+console.log(validGame.toString()); // Mortal Kombat 11 - $ 24.99
+</pre>
+<p>
+    Execute o exemplo acima
+</p>
+<pre>
+$ node testStructure.js
+</pre>
+
+<h2>Usando o Structure para validar as requisições de uma api</h2>
+<p>
+    Para este exemplo, vamos usar uma <a href="https://github.com/raviassis/blog-example-game-api" target="_blank">projeto</a>
+    que já contêm alguns endpoints criados.
+</p>
+<p>
+    Clone o repositório
+</p>
+<pre>
+$ git clone https://github.com/raviassis/blog-example-game-api.git
+</pre>
+<p>
+    Instale as dependências do projeto
+</p>
+<pre>
+$ cd blog-example-game-api
+$ npm install
+</pre>
+<p>
+    Este projeto possui um endpoint para criar games que está sem validação de requisição. O endpoint é POST /games.
+</p>
+<p>
+    Controller controllers/gameController.js
+</p>
+<pre>
+const gamesMock = require('../data/gamesMock.json');
+module.exports = {
+   /* List all games from mock file */
+   getAll: (req, res) => {
+       res.status(200).json(gamesMock);
+   },
+   /* Example of a create game method */
+   create: (req, res) => {
+       res.status(201).json(req.body);
+   }
+}
+</pre>
+<p>
+    Rota routes/games.js
+</p>
+<pre>
+var express = require('express');
+var router = express.Router();
+const controller = require('../controllers/gameController');
+  
+/* GET games listing. */
+router.get('/', controller.getAll);
+/* POST game */
+router.post('/', controller.create);
+  
+module.exports = router;
+</pre>
+<p>
+    <strong>Obs.: Este exemplo não possui persistência de dados.</strong>
+</p>
+<p>
+    Vamos adicionar uma validação ao método 'create' da gameController.
+</p>
+<p>
+    Instale o Structure
+</p>
+<pre>
+$ npm install structure
+</pre>
+<p>
+    Modifique o arquivo controllers/gameController.js
+</p>
+<pre>
+const gamesMock = require('../data/gamesMock.json');
+const { attributes } = require('structure'); // import structure
+ 
+/* Game validation request */
+const GameValidation = attributes({
+   name: {
+       type: String,
+       required: true,
+   },
+   price: {
+       type: Number,
+       positive: true,
+       required: true,
+   }
+})(class GameValidation {});
+ 
+module.exports = {
+   /* List all games from mock file */
+   getAll: (req, res) => {
+       res.status(200).json(gamesMock);
+   },
+   /* Example of a create game method */
+   create: (req, res) => {
+       const newGame = new GameValidation(req.body);
+       const {valid, errors} = newGame.validate();
+       if (valid) {
+           res.status(201).json(newGame);
+       }
+       else {
+           res.status(422).json(errors);
+       }       
+   }
+}
+</pre>
+
+<h2>Testando a validação</h2>
+<p>
+    Para testar, vamos fazer algumas requisições para a rota /games
+</p>
+
+<p>
+    Sem passar dados
+</p>
+<pre>
+$ curl -X POST -H "Content-Type: application/json" http://localhost:3000/games
+</pre>
+<p>
+    Resposta:
+</p>
+<pre>
+[{"message":"\"name\" is required","path":["name"]},{"message":"\"price\" is required","path":["price"]}]
+</pre>
+
+<p>
+    Informando nome vazio e preço negativo
+</p>
+<pre>
+$ curl -X POST -H "Content-Type: application/json" -d '{"name": "", "price": -20}' http://localhost:3000/games
+</pre>
+<p>
+    Resposta:
+</p>
+<pre>
+[{"message":"\"name\" is not allowed to be empty","path":["name"]},{"message":"\"price\" must be a positive number","path":["price"]}]
+</pre>
+
+<p>
+    Enviando requisição com valores válidos
+</p>
+<pre>
+$ curl -X POST -H "Content-Type: application/json" -d '{"name": "new game", "price": 20}' http://localhost:3000/games
+</pre>
+<p>
+    Resposta:
+</p>
+<pre>
+{"name":"new game","price":20}
+</pre>
+
+<p>
+    Isso ai pessoal. Implementamos de forma fácil um validador para as requisições da nossa rota /games.
+    Veremos em postagens futuras como validar as requisições utilizando um middleware de validação.
+</p>
+<p>
+    Para saber mais sobre o Structure acesse <a href="https://structure.js.org/" target="_blank">https://structure.js.org/</a>.
+</p>
+
+<h4>Veja também</h4>
+<ul>
+    <li>
+        <a href="../../../2020/07/10/publicando-app-nodejs-no-heroku.html" target="_blank">
+            Publicando App NodeJs no Heroku
+        </a>
+    </li>
+    <li>
+        <a href="../../../2020/07/03/desenvolvendo-uma-api-com-nodejs-e-express.html" target="_blank">
+            Desenvolvendo uma API com NodeJs e Express
+        </a>
+    </li>
+</ul>
