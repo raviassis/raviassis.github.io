@@ -1,0 +1,267 @@
+---
+layout: post
+title:  Utilizando Middlewares no Express
+date:   2020-07-23 12:00:00
+---
+<p>
+    Olá pessoal. No post de hoje, vou mostrar como podemos utilizar de middlewares em aplicações que utilizam Express.
+</p>
+
+<img src="/assets/images/posts/2020-07-23-utilizando-middlewares-no-express/img00.jpg" alt="banner do post">
+
+<p>
+    Obs.: Este post é uma continuação da publicação 
+    <a href="../../../2020/07/14/validando-requisicoes-com-structure-js.html">
+        Validando requisições com Structure
+    </a>
+</p>
+
+<h2>O que são middlewares?</h2>
+<p>
+    Basicamente, middlewares são qualquer tipo de software que servem como intermediários, provendo algum tipo de solução
+    ou serviço. No caso do Express, os middlewares são funções que são executadas quando chega alguma requisição na rota
+    que foi configurada.
+</p>
+
+<h3>Estrutura básica de um middleware no Express</h3>
+<img src="/assets/images/posts/2020-07-23-utilizando-middlewares-no-express/img01.jpg" 
+    alt="imagem de contendo uma estrutura básica de middleware no express">
+
+<h2>Exemplo de middleware</h2>
+<p>
+    Como exemplo, vamos criar um middleware para logar o tempo de todas as requisições.
+</p>
+<p>
+    Crie um novo projeto usando o 
+    <a href="https://www.npmjs.com/package/express-generator">
+        express-generator
+    </a>.
+</p>
+<pre>
+$ express --no-view example-middleware
+</pre>
+<p>
+    Acesse o diretório.
+</p>
+<pre>
+$ cd example-middleware
+</pre>
+<p>
+    Instale as dependências
+</p>
+<pre>
+$ npm install
+</pre>
+<p>
+    Modifique o arquivo app.js adicionando o código abaixo
+</p>
+<pre>
+/* Middleware to log requests */
+app.use((req, res, next) => {
+    console.log(`Resquest: ${new Date().toISOString()}`);
+    next();
+});    
+</pre>
+<p>
+    Execute o projeto
+</p>
+<pre>
+$ npm start
+</pre>
+<p>
+    Acesse http://localhost:3000/
+</p>
+<p>
+    Será logado no terminal o momento em que a aplicação recebeu a requisição.
+</p>
+<pre>
+Resquest: 2020-07-21T01:22:55.484Z
+</pre>
+
+<h2>Escrevendo um middleware para validação de requisições</h2>
+<p>
+    Para este exemplo, vamos utilizar o projeto 
+    <a href="https://github.com/raviassis/blog-example-game-api/tree/v2">
+        game api
+    </a>.
+</p>
+<p>
+    Clone a versão v2 do projeto.
+</p>
+<pre>
+$ git clone -b v2 --single-branch https://github.com/raviassis/blog-example-game-api.git
+</pre>
+<p>
+    Acesse o diretório e instale as dependências do projeto.
+</p>
+<pre>
+$ cd blog-example-game-api
+$ npm install
+</pre>
+<p>
+    Este projeto possui um endpoint para criar games, onde foi adicionado uma validação de requisição no 
+    <a href="../../../2020/07/14/validando-requisicoes-com-structure-js.html">post anterior</a>.
+</p>
+<p>
+    Controller controllers/gameController.js
+</p>
+<pre>
+const gamesMock = require('../data/gamesMock.json');
+const { attributes } = require('structure'); // import structure
+/* Game validation request */
+const GameValidation = attributes({
+  name: {
+      type: String,
+      required: true,
+  },
+  price: {
+      type: Number,
+      positive: true,
+      required: true,
+  }
+})(class GameValidation {});
+ 
+module.exports = {
+   /* List all games from mock file */
+   getAll: (req, res) => {
+       res.status(200).json(gamesMock);
+   },
+   /* Example of a create game method */
+   create: (req, res) => {
+       const newGame = new GameValidation(req.body);
+       const {valid, errors} = newGame.validate();
+       if (valid) {
+           res.status(201).json(newGame);
+       }
+       else {
+           res.status(422).json(errors);
+       }
+   }
+}
+</pre>
+<p>
+    Vamos fazer uma modificação nesse projeto, onde vamos remover a parte de validação da requisição do método da 
+    controller e adicioná-lo como um middleware no arquivo de rotas route/games.js
+</p>
+<p>
+    Primeiro, vamos criar um arquivo separado para a estrutura de validação.
+</p>
+<pre>
+#crie o diretório
+$ mkdir validations
+#crie o arquivo de validacao
+$ touch validations/createGameValidation.js
+</pre>
+<p>
+    Mova o schema de validação da controller games para o arquivo que criamos.
+</p>
+<p>
+    validations/createGameValidation.js
+</p>
+<pre>
+const { attributes } = require('structure'); // import structure
+/* Game validation request */
+module.exports = attributes({
+  name: {
+      type: String,
+      required: true,
+  },
+  price: {
+      type: Number,
+      positive: true,
+      required: true,
+  }
+})(class GameValidation {});
+</pre>
+<p>
+    A controller ficará assim controllers/gameController.js
+</p>
+<pre>
+const gamesMock = require('../data/gamesMock.json');
+ 
+module.exports = {
+   /* List all games from mock file */
+   getAll: (req, res) => {
+       res.status(200).json(gamesMock);
+   },
+   /* Example of a create game method */
+   create: (req, res) => {
+       res.status(201).json(req.body);
+   }
+}
+</pre>
+<p>
+    Agora vamos incluir no arquivo routes/games.js um middleware para o método create da gameController.
+</p>
+<pre>
+var express = require('express');
+var router = express.Router();
+const controller = require('../controllers/gameController');
+/* Schema para validação da requisição */
+const CreateGameValidation = require('../validations/createGameValidation.js');
+  
+/* GET games listing. */
+router.get('/', controller.getAll);
+/* POST game */
+router.post(
+   '/',
+   /* Middleware para validar requisicao */
+   (req, res, next) => {
+       var validator = new CreateGameValidation(req.body);
+       const {valid, errors} = validator.validate();
+       if (valid) {
+           next();
+       } else {
+           res.status(422).json(errors);
+       }
+   },
+   controller.create);
+  
+module.exports = router;
+</pre>
+<p>
+    Pronto. Removemos a responsabilidade pela validação dos dados da controller e movemos para um middleware na
+    configuração das rotas para /game. Vamos testar o funcionamento do middleware.
+</p>
+<p>
+    Execute o projeto
+</p>
+<pre>
+$ npm start
+</pre>
+<p>
+    Enviando requisição informando nome vazio e preço negativo
+</p>
+<pre>
+$ curl -X POST -H "Content-Type: application/json" -d '{"name": "", "price": -20}' http://localhost:3000/games
+</pre>
+<p>Resposta</p>
+<pre>
+    [{"message":"\"name\" is not allowed to be empty","path":["name"]},{"message":"\"price\" must be a positive number","path":["price"]}]
+</pre>
+<p>
+    Enviando requisição com valores válidos
+</p>
+<pre>
+$ curl -X POST -H "Content-Type: application/json" -d '{"name": "new game", "price": 20}' http://localhost:3000/games
+</pre>
+<p>
+    Resposta
+</p>
+<pre>
+{"name":"new game","price":20}
+</pre>
+
+<h4>Veja também</h4>
+<ul>
+    <li>
+        <a href="../../../2020/07/10/publicando-app-nodejs-no-heroku.html">
+            Publicando App NodeJs no Heroku
+        </a>
+    </li>
+    <li>
+        <a href="../../../2020/07/03/desenvolvendo-uma-api-com-nodejs-e-express.html">
+            Desenvolvendo uma API com NodeJs e Express
+        </a>
+    </li>
+</ul>
